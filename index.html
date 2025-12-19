@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PostYourTrade – Live FOREX Signals</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <h1 class="logo">PostYourTrade</h1>
+  <button id="openAuth" class="claim-btn">
+    Login / Claim Name
+    <span class="stars">⭐ ✨ ⚡</span>
+  </button>
+</header>
+
+  <div class="container">
+    <p class="subtitle">Live FOREX trade ideas & signals from traders worldwide</p>
+
+    <!-- Post Form -->
+    <div class="post-form-container">
+      <form id="postForm">
+        <textarea id="commentInput" placeholder="Share your trade idea... e.g. EUR/USD long @1.0820 → TP 1.0900 → +80 pips 🔥" required></textarea>
+        <input type="file" id="imageInput" accept="image/*" />
+        <button type="submit">Post Signal</button>
+      </form>
+    </div>
+
+    <!-- Posts Feed -->
+    <div id="postsContainer">
+      <p style="text-align:center;color:#8b949e;margin-top:40px;">No signals yet — post the first one!</p>
+    </div>
+  </div>
+
+  <!-- Auth Modal (centered) -->
+  <div id="authModal" style="display:none;">
+    <div class="modal-content">
+      <span id="closeModal" class="close">×</span>
+      <h1>PostYourTrade</h1>
+      <p class="subtitle">The clean social feed for all FOREX traders</p>
+
+      <div class="auth-hero">
+        <h2>Join the Trader Community</h2>
+        <p>Create your account and start sharing winning trades</p>
+      </div>
+
+      <input type="email" id="regEmail" placeholder="your.email@domain.com" required />
+      <input type="password" id="regPassword" placeholder="Strong password (8+ chars)" required />
+      <div class="username-group">
+        <input type="text" id="regUsername" placeholder="Choose your trader handle" required />
+        <span id="usernameStatus"></span>
+      </div>
+      <button id="registerBtn" class="big-auth-btn">
+        <span>👤</span> SIGN UP
+      </button>
+      <p id="regMessage"></p>
+      <button id="doneBtn" style="display:none;">Done → Close</button>
+    </div>
+  </div>
+  <script src="app.js"></script>
+  
+</body>
+</html>
