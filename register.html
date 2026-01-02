@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – PostYourTrade</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <h1 class="logo">PostYourTrade</h1>
+    <div>
+      <a href="#login" class="top-btn">Login</a>
+    </div>
+  </header>
 
+  <div class="container" style="max-width:500px;">
+    <h1 style="font-size:2.4rem; text-align:center;">Create Account</h1>
+    <p class="subtitle" style="text-align:center;">Join the clean FOREX trader community</p>
+
+    <form id="registerForm">
+      <input type="email" id="regEmail" placeholder="your.email@domain.com" required />
+      <input type="password" id="regPassword" placeholder="Strong password (8+ chars)" minlength="8" required />
+      
+      <div class="username-group" style="position:relative;">
+        <input type="text" id="regUsername" placeholder="Choose your trader handle" required />
+        <span id="usernameStatus" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:1.4rem;"></span>
+      </div>
+
+      <button type="submit" class="big-auth-btn">SIGN UP 🚀</button>
+    </form>
+
+    <p id="regMessage" style="margin-top:20px; text-align:center; font-weight:bold;"></p>
+    <p style="text-align:center; margin-top:20px;">
+      Already have an account? <a href="#login" style="color:#79ff9e;">Login here</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { auth, db, createUserWithEmailAndPassword, collection, addDoc, query, where, getDocs } from "/app.js";
+
+    const usernameInput = document.getElementById('regUsername');
+    const usernameStatus = document.getElementById('usernameStatus');
+    const form = document.getElementById('registerForm');
+    const message = document.getElementById('regMessage');
+
+    let usernameTimer;
+
+    // Live username check
+    usernameInput.addEventListener('input', async () => {
+      clearTimeout(usernameTimer);
+      const username = usernameInput.value.trim().toLowerCase();
+      usernameStatus.textContent = '';
+
+      if (username.length < 3) {
+        usernameStatus.textContent = username.length === 0 ? '' : '⚠️';
+        return;
+      }
+
+      usernameTimer = setTimeout(async () => {
+        const q = query(collection(db, "users"), where("usernameLower", "==", username));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          usernameStatus.textContent = '❌';
+          usernameStatus.style.color = '#ff6b6b';
+        } else {
+          usernameStatus.textContent = '✅';
+          usernameStatus.style.color = '#79ff9e';
+        }
+      }, 500);
+    });
+
+    // Registration
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const username = usernameInput.value.trim();
+
+      message.textContent = '';
+      message.style.color = '';
+
+      try {
+        // Check username again (final)
+        const q = query(collection(db, "users"), where("usernameLower", "==", username.toLowerCase()));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          message.textContent = 'Username already taken!';
+          message.style.color = '#ff6b6b';
+          return;
+        }
+
+        // Create auth user
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+
+        // Create profile in Firestore
+        await addDoc(collection(db, "users"), {
+          uid,
+          username,
+          usernameLower: username.toLowerCase(),
+          email,
+          bio: '',
+          avatar: '📈',
+          createdAt: new Date()
+        });
+
+        message.textContent = 'Account created! Welcome, ' + username;
+        message.style.color = '#79ff9e';
+
+        setTimeout(() => {
+          window.location.href = '#stream';
+        }, 1500);
+      } catch (err) {
+        console.error(err);
+        message.textContent = err.message || 'Registration failed';
+        message.style.color = '#ff6b6b';
+      }
+    });
+  </script>
+</body>
+</html>
