@@ -1,4 +1,4 @@
-/* PostYourTrade – Pro FOREX Trader Theme (2025) */
+/* PostYourTrade – Pro FOREX Trader Theme */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -7,44 +7,12 @@ body {
   background: #0d1117;
   color: #c9d1d9;
   min-height: 100vh;
-  padding: 20px;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  background: #161b22;
-  border-radius: 16px;
   padding: 40px;
-  border: 1px solid #30363d;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-}
-
-h1 {
-  text-align: center;
-  font-size: 2.8rem;
-  margin-bottom: 8px;
-  background: linear-gradient(90deg, #79ff9e, #00ff88);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-}
-
-.subtitle {
-  text-align: center;
-  color: #8b949e;
-  font-size: 1.2rem;
-  margin-bottom: 40px;
-}
-
-/* Top bar */
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  background: #0d1117;
-  border-bottom: 1px solid #30363d;
 }
 
 .logo {
@@ -55,6 +23,25 @@ h1 {
   -webkit-text-fill-color: transparent;
 }
 
+.subtitle {
+  text-align: center;
+  color: #8b949e;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: #0d1117;
+  border-bottom: 1px solid #30363d;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .top-btn {
   padding: 12px 24px;
   background: #21262d;
@@ -63,14 +50,14 @@ h1 {
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  text-decoration: none;
 }
 
 .top-btn:hover {
   background: #30363d;
 }
 
-/* Forms */
-input[type="email"], input[type="password"], input[type="text"], textarea, input[type="file"] {
+input[type="email"], input[type="password"], input[type="text"], textarea, select {
   width: 100%;
   padding: 16px;
   margin: 12px 0;
@@ -81,130 +68,42 @@ input[type="email"], input[type="password"], input[type="text"], textarea, input
   font-size: 1.1rem;
 }
 
-input::placeholder, textarea::placeholder {
-  color: #58a6ff;
-  font-style: italic;
-}
-
 textarea {
   min-height: 120px;
   resize: vertical;
 }
 
-.username-group {
-  position: relative;
-}
-
-#usernameStatus {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2rem;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-/* Buttons */
-button, .done-btn {
-  padding: 16px 32px;
-  background: #238636;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin: 10px 0;
-  width: 100%;
-}
-
-button:hover, .done-btn:hover {
-  background: #2ea043;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(35,134,54,0.4);
-}
-
-/* Big auth buttons */
 .big-auth-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 18px 32px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 50px;
   width: 100%;
-  max-width: 400px;
-  margin: 20px auto;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  padding: 18px;
   background: linear-gradient(135deg, #00ff88, #79ff9e);
   color: #0d1117;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 20px;
 }
 
 .big-auth-btn:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-2px);
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal-content {
-  background: #161b22;
-  padding: 60px;
-  border-radius: 16px;
-  text-align: center;
-  max-width: 500px;
-  border: 1px solid #30363d;
-  position: relative;
-}
-
-.close {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  font-size: 2.5rem;
-  cursor: pointer;
-  color: #8b949e;
-}
-
-/* Posts */
 .post {
-  background: #0d1117;
+  background: #161b22;
   border-radius: 16px;
-  overflow: hidden;
   margin-bottom: 24px;
   border: 1px solid #30363d;
-  transition: transform 0.2s;
-}
-
-.post:hover {
-  transform: translateY(-4px);
+  padding: 20px;
 }
 
 .post-header {
-  padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: #161b22;
+  margin-bottom: 16px;
 }
 
 .avatar {
@@ -222,73 +121,19 @@ button:hover, .done-btn:hover {
 
 .post-info strong {
   color: #79ff9e;
-  font-size: 1.2rem;
 }
 
 .post img {
   width: 100%;
-  display: block;
+  border-radius: 12px;
+  margin-top: 16px;
 }
 
-.post p {
-  padding: 20px;
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .container { padding: 20px; }
-  h1 { font-size: 2.2rem; }
-}
-/* Premium Claim Username button - top-right, small */
-.claim-btn {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #00ff88, #79ff9e);
-  color: #0d1117;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
-  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
-  position: relative;
-  overflow: visible; /* Lets stars escape */
-  transition: all 0.3s ease;
-  width: auto;
-  margin-left: auto;
-  z-index: 10;
-}
-
-.claim-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 255, 136, 0.6);
-}
-
-/* Rising stars — escape button and float up the page */
-.claim-btn .stars {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.4rem;
-  opacity: 0;
-  pointer-events: none;
-  animation: riseAndFade 4s infinite ease-out;
-  white-space: nowrap;
-  z-index: 20; /* Above everything */
-}
-
-@keyframes riseAndFade {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) translateY(0) scale(0.8);
-  }
-  20% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) translateY(-500px) scale(1.2); /* Rises high into page */
-  }
+.guest-prompt {
+  text-align: center;
+  padding: 16px;
+  background: #21262d;
+  border-radius: 12px;
+  border: 1px solid #30363d;
+  margin-bottom: 30px;
 }
