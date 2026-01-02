@@ -7,58 +7,189 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<header class="top-bar">
-  <h1 class="logo">PostYourTrade</h1>
-  <button id="openAuth" class="claim-btn">
-    Login / Claim Name
-    <span class="stars">⭐ ✨ ⚡</span>
-  </button>
-</header>
+  <header class="top-bar">
+    <h1 class="logo">PostYourTrade</h1>
+    <div>
+      <button id="authBtn" class="top-btn">Login / Register</button>
+    </div>
+  </header>
 
   <div class="container">
     <p class="subtitle">Live FOREX trade ideas & signals from traders worldwide</p>
 
-    <!-- Post Form -->
+    <div id="guestPrompt" style="text-align:center; margin-bottom:30px; padding:16px; background:#161b22; border-radius:12px; border:1px solid #30363d; display:none;">
+      <p style="color:#79ff9e;">You're posting as a guest. <span id="registerLink" style="color:#00ff88; font-weight:bold; cursor:pointer;">Register</span> to build your trader reputation!</p>
+    </div>
+
+    <div style="text-align:center; margin-bottom:40px; color:#79ff9e;">
+      <div class="avatar" id="userAvatar" style="width:80px;height:80px;font-size:2.5rem;margin:0 auto 16px;">📈</div>
+      <strong id="currentUsername">GuestTrader</strong>
+    </div>
+
     <div class="post-form-container">
       <form id="postForm">
-        <textarea id="commentInput" placeholder="Share your trade idea... e.g. EUR/USD long @1.0820 → TP 1.0900 → +80 pips 🔥" required></textarea>
+        <textarea id="commentInput" placeholder="Share your trade idea... e.g. EUR/USD long @1.0820 → TP 1.0900 +80 pips 🔥" required></textarea>
         <input type="file" id="imageInput" accept="image/*" />
         <button type="submit">Post Signal</button>
       </form>
     </div>
 
-    <!-- Posts Feed -->
-    <div id="postsContainer">
-      <p style="text-align:center;color:#8b949e;margin-top:40px;">No signals yet — post the first one!</p>
+    <div id="postsContainer" style="margin-top:40px;">
+      <p style="text-align:center;color:#8b949e;">No signals yet — post the first one!</p>
     </div>
   </div>
 
-  <!-- Auth Modal (centered) -->
-  <div id="authModal" style="display:none;">
-    <div class="modal-content">
-      <span id="closeModal" class="close">×</span>
-      <h1>PostYourTrade</h1>
-      <p class="subtitle">The clean social feed for all FOREX traders</p>
-
-      <div class="auth-hero">
-        <h2>Join the Trader Community</h2>
-        <p>Create your account and start sharing winning trades</p>
-      </div>
+  <!-- Auth Modal -->
+  <div id="authModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000;">
+    <div style="background:#161b22; padding:40px; border-radius:16px; width:500px; max-width:90%; border:1px solid #30363d;">
+      <span style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:#79ff9e;" id="closeModal">&times;</span>
+      <h1 style="text-align:center; font-size:2.4rem;">Create Account</h1>
+      <p style="text-align:center; color:#8b949e; margin-bottom:30px;">Join the clean FOREX trader community</p>
 
       <input type="email" id="regEmail" placeholder="your.email@domain.com" required />
-      <input type="password" id="regPassword" placeholder="Strong password (8+ chars)" required />
-      <div class="username-group">
+      <input type="password" id="regPassword" placeholder="Strong password (8+ chars)" minlength="8" required />
+      
+      <div style="position:relative;">
         <input type="text" id="regUsername" placeholder="Choose your trader handle" required />
-        <span id="usernameStatus"></span>
+        <span id="usernameStatus" style="position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:1.4rem;"></span>
       </div>
-      <button id="registerBtn" class="big-auth-btn">
-        <span>👤</span> SIGN UP
-      </button>
-      <p id="regMessage"></p>
-      <button id="doneBtn" style="display:none;">Done → Close</button>
+
+      <button id="registerBtn" class="big-auth-btn">SIGN UP 🚀</button>
+      <p id="regMessage" style="margin-top:20px; text-align:center; font-weight:bold;"></p>
+      <p style="text-align:center; margin-top:20px;">
+        Already have an account? <span id="switchToLogin" style="color:#79ff9e; cursor:pointer;">Login here</span>
+      </p>
     </div>
   </div>
+
   <script src="app.js"></script>
-  
+  <script>
+    // Guest mode
+    if (!localStorage.getItem('currentUserId')) {
+      if (!localStorage.getItem('guestUser')) {
+        const guestUsername = 'GuestTrader_' + Math.random().toString(36).substr(2, 5);
+        const avatars = ['📈', '🚀', '💹', '💰', '🤑', '📊', '🏦', '💵', '💱', '⚡'];
+        const guestAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+        localStorage.setItem('guestUser', JSON.stringify({ username: guestUsername, avatar: guestAvatar }));
+      }
+      const guest = JSON.parse(localStorage.getItem('guestUser'));
+      document.getElementById('currentUsername').textContent = guest.username;
+      document.getElementById('userAvatar').textContent = guest.avatar;
+      document.getElementById('guestPrompt').style.display = 'block';
+      document.getElementById('registerLink').addEventListener('click', () => document.getElementById('authModal').style.display = 'flex');
+    } else {
+      async function loadUser() {
+        const user = await getCurrentUser();
+        document.getElementById('currentUsername').textContent = user.username;
+        document.getElementById('userAvatar').textContent = user.avatar || '📈';
+        document.getElementById('guestPrompt').style.display = 'none';
+      }
+      loadUser();
+    }
+
+    // Post form
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = await getCurrentUser() || JSON.parse(localStorage.getItem('guestUser'));
+      const text = document.getElementById('commentInput').value.trim();
+      if (!text) return;
+
+      let imageData = null;
+      const fileInput = document.getElementById('imageInput');
+      if (fileInput.files[0]) {
+        imageData = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(fileInput.files[0]);
+        });
+      }
+
+      const post = {
+        username: user.username,
+        avatar: user.avatar,
+        text,
+        image: imageData,
+        timestamp: Date.now()
+      };
+
+      await addItem('posts', post);
+      document.getElementById('commentInput').value = '';
+      fileInput.value = '';
+      loadPosts();
+    });
+
+    // Load posts
+    async function loadPosts() {
+      const posts = await getAll('posts');
+      const container = document.getElementById('postsContainer');
+      container.innerHTML = '';
+
+      if (posts.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#8b949e;">No signals yet — post the first one!</p>';
+        return;
+      }
+
+      posts.sort((a, b) => b.timestamp - a.timestamp);
+
+      posts.forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'post';
+        div.innerHTML = `
+          <div class="post-header">
+            <div class="avatar">${post.avatar || '📈'}</div>
+            <div class="post-info">
+              <strong>${post.username}</strong>
+              <span>${new Date(post.timestamp).toLocaleString()}</span>
+            </div>
+          </div>
+          <p>${post.text.replace(/\n/g, '<br>')}</p>
+          ${post.image ? `<img src="${post.image}" alt="Trade chart">` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    loadPosts();
+
+    // Auth modal
+    document.getElementById('authBtn').addEventListener('click', () => {
+      document.getElementById('authModal').style.display = 'flex';
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('authModal').style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('authModal')) {
+        document.getElementById('authModal').style.display = 'none';
+      }
+    });
+
+    // Registration
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const password = document.getElementById('regPassword').value;
+      const username = document.getElementById('regUsername').value.trim();
+
+      const message = document.getElementById('regMessage');
+      message.textContent = '';
+
+      if (await getUserByUsername(username)) {
+        message.textContent = 'Username taken';
+        message.style.color = '#ff6b6b';
+        return;
+      }
+
+      const user = { email, password, username, bio: '', avatar: '📈', createdAt: Date.now() };
+      const id = await addItem('users', user);
+      localStorage.setItem('currentUserId', id);
+      localStorage.removeItem('guestUser');
+
+      message.textContent = 'Account created!';
+      message.style.color = '#79ff9e';
+      setTimeout(() => location.reload(), 1500);
+    });
+  </script>
 </body>
 </html>
