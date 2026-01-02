@@ -30,82 +30,54 @@
       <strong id="currentUsername">GuestTrader</strong>
     </div>
 
-    <!-- Trader Proposal Form -->
+    <!-- Post Form -->
     <div class="post-form-container">
-      <h3 style="text-align:center; margin-bottom:20px;">Share Trader Proposal</h3>
       <form id="postForm">
-        <input type="text" id="proposalTitle" placeholder="Proposal title" required />
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
-          <input type="text" id="assetName" placeholder="Pair e.g. EUR/USD" required />
-          <select id="direction" required>
-            <option value="">Buy/Sell</option>
-            <option value="Buy">Buy</option>
-            <option value="Sell">Sell</option>
-          </select>
-          <input type="number" step="0.0001" id="entry" placeholder="Entry" required />
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
-          <input type="number" step="0.0001" id="sl" placeholder="SL e.g. 1.0800" />
-          <input type="number" step="0.0001" id="tp" placeholder="TP e.g. 1.0900" />
-        </div>
-
-        <textarea id="commentInput" placeholder="Please enter a description about your trade idea..." style="min-height:120px; margin-top:12px;" required></textarea>
-
-        <div style="margin-top:12px;">
-          <label class="custom-file-upload">
-            Choose File
-            <input type="file" id="imageInput" accept="image/*" />
-          </label>
-          <span id="fileStatus">No file chosen</span>
-        </div>
-
-        <button type="submit" class="big-auth-btn" style="margin-top:20px;">Post Signal</button>
+        <textarea id="commentInput" placeholder="Share your trade idea... e.g. EUR/USD long @1.0820 → TP 1.0900 +80 pips 🔥" required></textarea>
+        <input type="file" id="imageInput" accept="image/*" />
+        <button type="submit">Post Signal</button>
       </form>
     </div>
 
     <!-- Posts Feed -->
-    <div id="postsContainer" style="margin-top:40px;">
-      <p style="text-align:center;color:#8b949e;">No signals yet — post the first one!</p>
+    <div id="postsContainer">
+      <p style="text-align:center;color:#8b949e;margin-top:40px;">Loading global signals...</p>
     </div>
   </div>
 
   <script type="module">
-    import { getCurrentUser, getAll, addItem, STORES } from "/app.js";
+    import { auth, db, storage, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, ref, uploadBytes, getDownloadURL, onAuthStateChanged } from "/app.js";
 
     document.getElementById('loader').style.display = 'none';
 
-    // File name display
-    document.getElementById('imageInput').addEventListener('change', (e) => {
-      const fileName = e.target.files.length > 0 ? e.target.files[0].name : 'No file chosen';
-      document.getElementById('fileStatus').textContent = fileName;
+    // Current user (real or guest)
+    let currentUser = null;
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = { uid: user.uid, username: user.displayName || user.email.split('@')[0], avatar: '📈' };
+        document.getElementById('guestPrompt').style.display = 'none';
+      } else {
+        const guest = JSON.parse(localStorage.getItem('guestUser') || '{}');
+        currentUser = { username: guest.username || 'GuestTrader', avatar: guest.avatar || '📈' };
+        document.getElementById('guestPrompt').style.display = 'block';
+      }
+      document.getElementById('currentUsername').textContent = currentUser.username;
+      document.getElementById('userAvatar').textContent = currentUser.avatar;
     });
 
-    async function loadCurrentUser() {
-      const user = await getCurrentUser();
-      if (user) {
-        document.getElementById('currentUsername').textContent = user.username || 'GuestTrader';
-        document.getElementById('userAvatar').textContent = user.avatar || '📈';
-        if (!localStorage.getItem('currentUserId')) {
-          document.getElementById('guestPrompt').style.display = 'block';
-        }
-      }
-    }
-
-    async function loadPosts() {
-      const posts = await getAll(STORES.POSTS);
+    // Load global posts in real-time
+    const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
       const container = document.getElementById('postsContainer');
       container.innerHTML = '';
 
-      if (posts.length === 0) {
+      if (snapshot.empty) {
         container.innerHTML = '<p style="text-align:center;color:#8b949e;">No signals yet — post the first one!</p>';
         return;
       }
 
-      posts.sort((a, b) => b.timestamp - a.timestamp);
-
-      posts.forEach(post => {
+      snapshot.forEach(doc => {
+        const post = doc.data();
         const div = document.createElement('div');
         div.className = 'post';
         div.innerHTML = `
@@ -113,71 +85,86 @@
             <div class="avatar">${post.avatar || '📈'}</div>
             <div class="post-info">
               <strong>${post.username}</strong>
-              <span>${new Date(post.timestamp).toLocaleString()}</span>
+              <span>${new Date(post.timestamp.toDate()).toLocaleString()}</span>
             </div>
           </div>
-          <h3 style="margin:16px 0 8px;">${post.proposalTitle || 'Trader Proposal'}</h3>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
-            <div><strong>Pair:</strong> ${post.assetName || 'N/A'}</div>
-            <div><strong>Direction:</strong> ${post.direction || 'N/A'}</div>
-            <div><strong>Entry:</strong> ${post.entry || 'N/A'}</div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-            <div><strong>SL:</strong> ${post.sl || 'N/A'}</div>
-            <div><strong>TP:</strong> ${post.tp || 'N/A'}</div>
-          </div>
           <p>${post.text.replace(/\n/g, '<br>')}</p>
-          ${post.image ? `<img src="${post.image}" alt="Trade chart" class="post-image">` : ''}
+          ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Trade chart" class="post-image">` : ''}
         `;
         container.appendChild(div);
       });
-    }
-
-    document.getElementById('postForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const user = await getCurrentUser() || JSON.parse(localStorage.getItem('guestUser') || '{}');
-
-      const post = {
-        username: user.username || 'GuestTrader',
-        avatar: user.avatar || '📈',
-        proposalTitle: document.getElementById('proposalTitle').value.trim(),
-        assetName: document.getElementById('assetName').value.trim(),
-        direction: document.getElementById('direction').value,
-        entry: document.getElementById('entry').value,
-        sl: document.getElementById('sl').value,
-        tp: document.getElementById('tp').value,
-        text: document.getElementById('commentInput').value.trim(),
-        timestamp: Date.now()
-      };
-
-      let imageData = null;
-      const fileInput = document.getElementById('imageInput');
-      if (fileInput.files[0]) {
-        imageData = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(fileInput.files[0]);
-        });
-      }
-      post.image = imageData;
-
-      await addItem(STORES.POSTS, post);
-
-      // Reset form
-      document.getElementById('postForm').reset();
-      document.getElementById('fileStatus').textContent = 'No file chosen';
-
-      loadPosts();
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('currentUserId');
+// Load posts from Firestore (global sync)
+async function loadPosts() {
+  const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+  onSnapshot(q, (snapshot) => {
+    const container = document.getElementById('postsContainer');
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = '<p style="text-align:center;color:#8b949e;">No signals yet — post the first one!</p>';
+      return;
+    }
+
+    snapshot.forEach(doc => {
+      const post = doc.data();
+      const div = document.createElement('div');
+      div.className = 'post';
+      div.innerHTML = `
+        <div class="post-header">
+          <div class="avatar">${post.avatar || '📈'}</div>
+          <div class="post-info">
+            <strong>${post.username}</strong>
+            <span>${new Date(post.timestamp.toDate()).toLocaleString()}</span>
+          </div>
+        </div>
+        <p>${post.text.replace(/\n/g, '<br>')}</p>
+        ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Trade chart" class="post-image">` : ''}
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+
+// Call it on load
+loadPosts();
+
+    // Post form
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const text = document.getElementById('commentInput').value.trim();
+      if (!text) return;
+
+      let imageUrl = null;
+      const fileInput = document.getElementById('imageInput');
+      if (fileInput.files[0]) {
+        const storageRef = ref(storage, 'posts/' + Date.now() + '_' + fileInput.files[0].name);
+        await uploadBytes(storageRef, fileInput.files[0]);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      await addDoc(collection(db, "posts"), {
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        text,
+        imageUrl,
+        timestamp: serverTimestamp(),
+        uid: currentUser.uid || null
+      });
+
+      document.getElementById('commentInput').value = '';
+      fileInput.value = '';
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut(auth);
       localStorage.removeItem('guestUser');
       location.reload();
     });
-
-    loadCurrentUser();
-    loadPosts();
   </script>
 </body>
 </html>
